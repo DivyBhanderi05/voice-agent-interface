@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from 'react'
-import { processUserRequest } from './processUserRequest'
+import { AgentRequestError, processUserRequest } from './processUserRequest'
 import './App.css'
 
 const joinTranscript = (current: string, next: string) =>
@@ -25,6 +25,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [response, setResponse] = useState('')
   const [submissionMessage, setSubmissionMessage] = useState('')
+  const [requestError, setRequestError] = useState<AgentRequestError | null>(null)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const inputBeforeListeningRef = useRef('')
@@ -34,6 +35,7 @@ function App() {
   const recognitionErrorRef = useRef(false)
   const shouldKeepListeningRef = useRef(false)
   const restartTimerRef = useRef<number | null>(null)
+  const isSubmittingRef = useRef(false)
 
   useEffect(() => {
     const SpeechRecognitionAPI =
@@ -187,6 +189,7 @@ function App() {
     shouldKeepListeningRef.current = true
     setInterimTranscript('')
     setSubmissionMessage('')
+    setRequestError(null)
 
     try {
       recognition.start()
@@ -209,19 +212,30 @@ function App() {
       return
     }
 
-    if (isSubmitting) return
+    if (isSubmittingRef.current) return
 
+    isSubmittingRef.current = true
     setIsSubmitting(true)
     setSubmissionMessage('')
+    setRequestError(null)
 
     try {
       const agentResponse = await processUserRequest(completeText)
       lastSubmittedRef.current = completeText
       setResponse(agentResponse)
-      setSubmissionMessage('Request sent.')
-    } catch {
-      setSubmissionMessage('The request could not be processed. Please try again.')
+      setSubmissionMessage('Response received.')
+    } catch (error) {
+      const safeError =
+        error instanceof AgentRequestError
+          ? error
+          : new AgentRequestError(
+              'api',
+              'The request could not be processed. Please try again.',
+            )
+      setRequestError(safeError)
+      setSubmissionMessage(safeError.message)
     } finally {
+      isSubmittingRef.current = false
       setIsSubmitting(false)
     }
   }
@@ -255,6 +269,7 @@ function App() {
             onChange={(event) => {
               setInput(event.target.value)
               setSubmissionMessage('')
+              setRequestError(null)
             }}
             placeholder="What would you like help with?"
             aria-describedby="speech-status interim-text submission-message"
@@ -289,12 +304,22 @@ function App() {
 
           <p
             id="submission-message"
-            className="submission-message"
+            className={`submission-message${requestError ? ' error' : ''}`}
             role="status"
             aria-live="polite"
           >
             {submissionMessage}
           </p>
+          {requestError && (
+            <button
+              type="button"
+              className="retry-button"
+              onClick={() => void handleSubmit(input)}
+              disabled={isSubmitting}
+            >
+              Retry
+            </button>
+          )}
         </form>
 
         <section className="response-panel" aria-label="Agent response">

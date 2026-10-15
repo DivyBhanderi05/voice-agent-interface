@@ -158,6 +158,18 @@ button:disabled {
   font-size: 0.9rem;
 }
 
+.submission-message.error {
+  color: #a02f2f;
+}
+
+.retry-button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid #c6d4ce;
+  color: #234c3c;
+  background: #f2f7f4;
+}
+
 .response-panel {
   margin-top: 28px;
   padding: 22px;
