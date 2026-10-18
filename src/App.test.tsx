@@ -1,64 +1,62 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import { AgentRequestError, processUserRequest } from './processUserRequest'
 
-vi.mock('./processUserRequest', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./processUserRequest')>()
-  return { ...original, processUserRequest: vi.fn() }
-})
+class MockSpeechRecognition {
+  continuous = false
+  interimResults = false
+  lang = ''
+  onstart: (() => void) | null = null
+  onresult: ((event: SpeechRecognitionEvent) => void) | null = null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null = null
+  onend: (() => void) | null = null
+  start = vi.fn(() => this.onstart?.())
+  stop = vi.fn(() => this.onend?.())
+  abort = vi.fn()
+}
 
-const mockedProcessUserRequest = vi.mocked(processUserRequest)
-
-describe('App request behavior', () => {
+describe('browser voice-to-text test', () => {
   afterEach(() => {
     cleanup()
-    vi.clearAllMocks()
+    delete window.SpeechRecognition
+    delete window.webkitSpeechRecognition
   })
 
-  it('submits typed input only after Send and displays success', async () => {
-    const user = userEvent.setup()
-    let resolveRequest: (reply: string) => void = () => undefined
-    mockedProcessUserRequest.mockReturnValue(
-      new Promise((resolve) => {
-        resolveRequest = resolve
-      }),
-    )
+  it('disables the microphone when speech recognition is unavailable', async () => {
     render(<App />)
 
-    await user.type(screen.getByLabelText('Your request'), 'Find a concert')
-    expect(mockedProcessUserRequest).not.toHaveBeenCalled()
-
-    await user.click(screen.getByRole('button', { name: 'Send' }))
-    expect(mockedProcessUserRequest).toHaveBeenCalledOnce()
-    expect(mockedProcessUserRequest).toHaveBeenCalledWith('Find a concert')
-    expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled()
-
-    resolveRequest('Here is a concert option.')
-    expect(await screen.findByText('Here is a concert option.')).toBeInTheDocument()
-    expect(screen.getByText('Response received.')).toBeInTheDocument()
+    expect(await screen.findByText(/not supported/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mic' })).toBeDisabled()
   })
 
-  it.each([
-    ['api', 'The assistant service is unavailable.'],
-    ['network', 'Could not reach the server.'],
-  ] as const)('shows a retry state after a %s error', async (kind, message) => {
+  it('starts and stops a supported speech recognizer', async () => {
+    const recognition = new MockSpeechRecognition()
+    const SpeechRecognitionMock = function () {
+      return recognition
+    } as unknown as SpeechRecognitionConstructor
+    window.SpeechRecognition = SpeechRecognitionMock
     const user = userEvent.setup()
-    mockedProcessUserRequest
-      .mockRejectedValueOnce(new AgentRequestError(kind, message))
-      .mockResolvedValueOnce('Recovered response')
     render(<App />)
 
-    await user.type(screen.getByLabelText('Your request'), 'Find an event')
-    await user.click(screen.getByRole('button', { name: 'Send' }))
+    await user.click(await screen.findByRole('button', { name: 'Mic' }))
+    expect(recognition.start).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument()
 
-    expect(await screen.findByText(message)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    act(() => {
+      recognition.onresult?.({
+        resultIndex: 0,
+        results: {
+          length: 1,
+          0: { isFinal: true, 0: { transcript: 'hello browser' } },
+        },
+      } as unknown as SpeechRecognitionEvent)
+    })
+    expect(screen.getByLabelText('Speech transcript')).toHaveValue('hello browser')
 
-    expect(mockedProcessUserRequest).toHaveBeenCalledTimes(2)
-    expect(await screen.findByText('Recovered response')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Stop' }))
+    expect(recognition.stop).toHaveBeenCalledOnce()
   })
 })
