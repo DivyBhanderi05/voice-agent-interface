@@ -28,6 +28,7 @@
 
   function findEventNameInput() {
     const directSelectors = [
+      'input.field[required][maxlength="80"][placeholder="Desert Founders Mixer"]',
       'input[name="eventName"]',
       'input[name="event_name"]',
       'input[id="event-name"]',

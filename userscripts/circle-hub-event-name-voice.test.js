@@ -61,4 +61,24 @@ describe('Circle Hub Event name voice userscript', () => {
     expect(input.value).toBe('Desert Founders Mixer')
     expect(inputListener).toHaveBeenCalled()
   })
+
+  it('recognizes the current Circle Hub Event name input signature', () => {
+    document.body.innerHTML = `
+      <input
+        required
+        maxlength="80"
+        placeholder="Desert Founders Mixer"
+        class="mt-1 w-full font-normal field"
+        value=""
+      />
+    `
+    window.SpeechRecognition = class MockSpeechRecognition {}
+
+    window.eval(userscript)
+
+    const input = document.querySelector('input')
+    expect(input.nextElementSibling?.id).toBe(
+      'circle-hub-event-name-voice-control',
+    )
+  })
 })
