@@ -28,13 +28,13 @@ npm run build
 
 This branch does not send transcripts to Gemini or any application backend.
 
-## Tampermonkey demo for Circle Hub
+## Tampermonkey demo for Circle Create Event
 
 The userscript at
-`userscripts/circle-hub-event-name-voice.user.js` injects a **Mic/Stop** control
-beside the existing **Event name** input on Circle Hub. It is restricted to
-`https://circle-hub-xi.vercel.app/hub/*` and makes no network requests of its
-own.
+`userscripts/circle-event-voice-input.user.js` injects separate **Mic/Stop**
+controls beside the existing **Event Title** and **Description** fields. It is
+restricted to `https://circle.ooo/create-event*` and makes no network requests
+of its own.
 
 To install it for the demo:
 
@@ -42,14 +42,14 @@ To install it for the demo:
 2. Open the Tampermonkey dashboard and select **Create a new script**.
 3. Replace the generated template with the complete contents of the userscript.
 4. Save the script and confirm that it is enabled.
-5. Open Circle Hub, navigate to the event form, and allow microphone access.
-6. Press **Mic**, speak the event name, and press **Stop**.
+5. Open `https://circle.ooo/create-event`, and allow microphone access.
+6. Press the **Mic** below Event Title or Description, speak, and press **Stop**.
 
 The browser's speech-recognition service may process audio outside the page.
 Do not use confidential information during the demo.
 
 If recognition reports `not-allowed` even after site and operating-system
 microphone permissions are enabled, confirm the installed userscript includes
-`// @sandbox raw`, save it again, and reload Circle Hub. This requests execution
+`// @sandbox raw`, save it again, and reload the page. This requests execution
 in the website's main JavaScript context rather than an isolated extension
 context.
