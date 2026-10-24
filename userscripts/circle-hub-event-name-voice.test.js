@@ -17,6 +17,11 @@ describe('Circle Hub Event name voice userscript', () => {
     delete window.webkitSpeechRecognition
   })
 
+  it('requests execution in the website main world', () => {
+    expect(userscript).toContain('// @sandbox      raw')
+    expect(userscript).toContain('// @grant        none')
+  })
+
   it('injects a microphone control and writes recognized speech to the input', () => {
     document.body.innerHTML = `
       <form>

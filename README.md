@@ -47,3 +47,9 @@ To install it for the demo:
 
 The browser's speech-recognition service may process audio outside the page.
 Do not use confidential information during the demo.
+
+If recognition reports `not-allowed` even after site and operating-system
+microphone permissions are enabled, confirm the installed userscript includes
+`// @sandbox raw`, save it again, and reload Circle Hub. This requests execution
+in the website's main JavaScript context rather than an isolated extension
+context.

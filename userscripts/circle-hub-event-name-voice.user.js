@@ -4,6 +4,7 @@
 // @version      0.1.0
 // @description  Adds browser voice-to-text controls to the Circle Hub Event name field.
 // @match        https://circle-hub-xi.vercel.app/hub/*
+// @sandbox      raw
 // @grant        none
 // @run-at       document-idle
 // ==/UserScript==
