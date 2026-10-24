@@ -27,3 +27,23 @@ npm run build
 ```
 
 This branch does not send transcripts to Gemini or any application backend.
+
+## Tampermonkey demo for Circle Hub
+
+The userscript at
+`userscripts/circle-hub-event-name-voice.user.js` injects a **Mic/Stop** control
+beside the existing **Event name** input on Circle Hub. It is restricted to
+`https://circle-hub-xi.vercel.app/hub/*` and makes no network requests of its
+own.
+
+To install it for the demo:
+
+1. Install Tampermonkey in Chrome or Edge.
+2. Open the Tampermonkey dashboard and select **Create a new script**.
+3. Replace the generated template with the complete contents of the userscript.
+4. Save the script and confirm that it is enabled.
+5. Open Circle Hub, navigate to the event form, and allow microphone access.
+6. Press **Mic**, speak the event name, and press **Stop**.
+
+The browser's speech-recognition service may process audio outside the page.
+Do not use confidential information during the demo.
